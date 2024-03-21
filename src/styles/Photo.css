@@ -1,0 +1,129 @@
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.edit-article{
+    background-color: #F8F8F8;
+    box-sizing: border-box;
+    padding-bottom: 500px;
+}
+.edit-article input,.edit-article select,.edit-article textarea{
+    background-color: #F8F8F8;
+}
+
+.edit-article-header{
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    z-index: 5;
+}
+
+.horizontal-scroll-menu-component{
+    padding-top: 100px;
+}
+
+.nav-bar-icons{
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    top: 27%;
+    justify-content: space-between;
+    background-color: #F8F8F8;
+    border-right: 1px solid #D4D9E2;
+}
+
+.form-preview{
+    display: flex;
+    justify-content: end;
+    width: 100%;
+}
+.button-eye{
+    background: none;
+    border: none;
+}
+.img-eye{
+    width: 15px;
+    height: 10px;
+}
+.span-preview{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 17px;
+    color: #D72130;
+    text-align: center;
+    padding-left: 6px;
+}
+
+.form-container{
+    padding-top: 15%;
+    max-width: 814px;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-select-container{
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    display: flex;
+    padding-top: 10px;
+}
+
+.comments-show{
+    display: flex;
+    justify-content: start;
+    width: 100%;
+    padding-top: 15px;
+}
+.span-comments{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #7F8899;
+    padding-right: 5px;
+    padding-top: 3px;
+}
+.span-show{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #D72130;
+    padding-right: 5px;
+    padding-top: 3px;
+}
+.span-hide{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 16px;
+    color: #2B2F43;
+    padding-right: 5px;
+    padding-top: 3px;
+}
+.show-hide-toggle{
+    height: 55%;
+    color: #D72130;
+    background-color: #D72130;
+    border-color: #D4D9E2;
+}
+
+.show-hide-toggle:checked{
+
+}
+.form-check-input:checked{
+    background-color: #D72130;
+    border: 1px solid #D4D9E2;
+}

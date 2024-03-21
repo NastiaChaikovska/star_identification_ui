@@ -1,0 +1,68 @@
+.identify-page {
+    /*position: relative;*/
+    width: 100%;
+    height: 100%;
+}
+
+.identify-text {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    color: #D9D9D9;
+    margin: 2% 0;
+    font-size: 27px;
+    font-weight: 450;
+    letter-spacing: 0.05em;
+}
+
+.picture-input {
+    /*position: absolute;*/
+    left: 0;
+    right: 0;
+    margin: auto;
+    display: flex;
+    margin-top: 3%;
+    width: 30%;
+    height: 30%;
+    background-color: #333333;
+    justify-content: center;
+    margin-bottom: 2%;
+    /*padding-bottom: 10%;*/
+}
+
+.picture-input-button {
+    /*position: absolute;*/
+    left: 0;
+    right: 0;
+    margin: 78% 38% 10% 38%;
+    width: 30%;
+    /*margin-top: 66%;*/
+}
+
+.picture-input-button-text {
+    display: flex;
+    justify-content: center;
+    color: #D9D9D9;
+    font-size: 20px;
+    margin-top: 1%;
+    padding-bottom: 75%;
+}
+
+.identify-button{
+    /*margin: 42% 50% 0 45%;*/
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    /*margin-top: 56%;*/
+}
+
+.identify-result{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    color: #D9D9D9;
+    margin: 4% 0;
+    font-size: 29px;
+    font-weight: 450;
+    letter-spacing: 0.07em;
+}
