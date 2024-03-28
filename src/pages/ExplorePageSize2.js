@@ -1,21 +1,57 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import * as THREE from 'three';
-import { Text } from 'troika-three-text';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Layout from "../components/Layout";
 import '../styles/ExplorePage.css';
+import {Text} from "troika-three-text";
 
-function ExplorePageCenter() {
+function ExplorePageSize2() {
     const SPHERE_RADIUS = 500;
     const [stars, setStars] = useState([]);
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
     const sceneRef = useRef(new THREE.Scene());
-    // const cameraRef = useRef(new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000));
-    const cameraRef = useRef(new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 2, 2000));
+    const cameraRef = useRef(new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000));
     const rendererRef = useRef(new THREE.WebGLRenderer({ antialias: true }));
     const sphereRef = useRef(null);
+
+    // Update the camera's near clipping plane and the size factor for the stars
+    // cameraRef.current = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+
+    // Update the sizeFactor uniform in the shader material to make stars larger
+    // shaderMaterial.uniforms.sizeFactor.value = 20.0;
+
+    // Custom shader material
+    const shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png') },
+            // Additional uniform to control the size of the stars from JavaScript
+            sizeFactor: { value: 50.0 }
+        },
+        vertexShader: `
+            attribute float size;
+            varying vec3 vColor;
+            void main() {
+                vColor = color;
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_PointSize = size * (300.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D pointTexture;
+            varying vec3 vColor;
+            void main() {
+                gl_FragColor = vec4(vColor, 1.0);
+                gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
+            }
+        `,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        transparent: true,
+        vertexColors: true
+    });
 
     const handleExplore = async () => {
         try {
@@ -39,38 +75,29 @@ function ExplorePageCenter() {
     };
 
     const createStars = () => {
-        const geometry = new THREE.BufferGeometry();
         const positions = [];
         const colors = [];
-        const color = new THREE.Color();
+        const sizes = [];
 
         stars.forEach(star => {
-            const [[longitude, latitude], size] = star;
+            const [[longitude, latitude], size, id] = star;  //, [ra, dec], mag] = star;
             const phi = (90 - latitude) * (Math.PI / 180);
             const theta = (longitude + 180) * (Math.PI / 180);
-            const x = -((SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta)));
-            const y = ((SPHERE_RADIUS * Math.cos(phi)));
-            const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
-
+            const x = -((500 * Math.sin(phi) * Math.cos(theta)));
+            const y = ((500 * Math.cos(phi)));
+            const z = ((500 * Math.sin(phi) * Math.sin(theta)));
             positions.push(x, y, z);
-            color.setHSL(1.0, 1.0, 1.0);
-            colors.push(color.r, color.g, color.b);
+            sizes.push(size/1.6);
+            colors.push(1.0, 1.0, 1.0); // White color for simplicity
         });
 
+        const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
 
-        const texture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
-        const material = new THREE.PointsMaterial({
-            size: 5, // Use the size from the data
-            map: texture,
-            vertexColors: true,
-            transparent: true,
-            alphaTest: 0.1
-        });
-
-        const points = new THREE.Points(geometry, material);
-        sceneRef.current.add(points);
+        const particles = new THREE.Points(geometry, shaderMaterial);
+        sceneRef.current.add(particles);
     };
 
     const northLabelRef = useRef(null);
@@ -82,13 +109,11 @@ function ExplorePageCenter() {
 
         // North pole marker
         const northPole = new THREE.Mesh(geometry, northMaterial);
-        // northPole.position.set(0, 500, 0); // Positioned at the top of your celestial sphere
         northPole.position.set(0, SPHERE_RADIUS, 0); // Positioned at the top of your celestial sphere
         sceneRef.current.add(northPole);
 
         // South pole marker
         const southPole = new THREE.Mesh(geometry, southMaterial);
-        // southPole.position.set(0, -500, 0); // Positioned at the bottom of your celestial sphere
         southPole.position.set(0, -SPHERE_RADIUS, 0); // Positioned at the bottom of your celestial sphere
         sceneRef.current.add(southPole);
 
@@ -113,10 +138,8 @@ function ExplorePageCenter() {
         // Update the scene to show the markers and labels
         rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
-
-
     const createMeridians = () => {
-        const material = new THREE.LineBasicMaterial({ color: '#ffefd5' }); // White color for meridians
+        const material = new THREE.LineBasicMaterial({ color: '#fde3b9' }); // White color for meridians
 
         for (let i = -180; i <= 180; i += 10) { // Adjust the step for more or fewer meridians
             const points = [];
@@ -152,8 +175,8 @@ function ExplorePageCenter() {
 
             const text = new Text();
             text.text = `${i}°`;
-            text.fontSize = 12;
-            text.fontWeight = 600;
+            text.fontSize = 14;
+            text.fontWeight = 700;
             // text.color = 'yellow';
             text.color = '#00bfff';
             text.position.set(x, y, z);
@@ -166,6 +189,7 @@ function ExplorePageCenter() {
 
     const animate = () => {
         requestAnimationFrame(animate);
+        // render();
         // Make sure the text labels face the camera
         meridianLabels.current.forEach(label => {
             label.quaternion.copy(cameraRef.current.quaternion);
@@ -179,34 +203,51 @@ function ExplorePageCenter() {
     };
 
     useEffect(() => {
+        // Setup renderer and add it to the DOM
         rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-        rendererRef.current.setClearColor(0x000000);
+        rendererRef.current.setClearColor(0x2C2C2C);
         sphereRef.current.appendChild(rendererRef.current.domElement);
 
+        // Update OrbitControls configuration to allow for closer zoom
         const controls = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
-        controls.minDistance = 0.1; // Set min zoom level (distance from the target)
-        controls.maxDistance = 1000000; // Set max zoom level (distance from the target)
+        controls.minDistance = 0.1; // Can be even smaller like 0.1 for a closer zoom
+        controls.maxDistance = 5000; // Farther max to see the whole scene
         controls.enableZoom = true;
-        controls.zoomSpeed = 1.2; // Adjust the speed of zoom
+        controls.zoomSpeed = 2.0;
 
+        // Adjust camera position for initial view
+        // cameraRef.current.position.set(0, 0, SPHERE_RADIUS * 1.5);
         cameraRef.current.position.set(0, 0, 1); // Start the camera slightly off the center
         cameraRef.current.updateProjectionMatrix();
         controls.update();
 
         animate();
 
+        // Handle window resize
+        const onWindowResize = () => {
+            cameraRef.current.aspect = window.innerWidth / window.innerHeight;
+            cameraRef.current.updateProjectionMatrix();
+            rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+        };
+        window.addEventListener('resize', onWindowResize, false);
+
+        // Clean up on component unmount
         return () => {
             rendererRef.current.dispose();
-            controls.dispose();
+            if (controls) controls.dispose();
+            window.removeEventListener('resize', onWindowResize);
             if (sphereRef.current) {
                 sphereRef.current.removeChild(rendererRef.current.domElement);
             }
         };
     }, []);
 
+    // This useEffect hook gets called when the 'stars' state updates
     useEffect(() => {
-        createStars();
-    }, [stars]);
+        if (stars.length > 0) {
+            createStars();
+        }
+    }, [stars]); // The dependency array tells React to rerun this effect when 'stars' changes
 
     return (
         <div className="explore-page">
@@ -238,4 +279,4 @@ function ExplorePageCenter() {
     );
 }
 
-export default ExplorePageCenter;
+export default ExplorePageSize2;
