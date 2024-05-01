@@ -17,10 +17,10 @@ function ExplorePageInfo2() {
     const rendererRef = useRef(new THREE.WebGLRenderer({ antialias: true }));
     const sphereRef = useRef(null);
 
-    const [selectedStar, setSelectedStar] = useState(null); // New state to hold the selected star's information
-    const raycasterRef = useRef(new Raycaster()); // Raycaster for mouse interaction
-    const mouseRef = useRef(new Vector2()); // Mouse position
-    const starMeshesRef = useRef([]); // Array to keep track of star meshes for raycasting
+    const [selectedStar, setSelectedStar] = useState(null);         // New state to hold the selected star's information
+    const raycasterRef = useRef(new Raycaster());  // Raycaster for mouse interaction
+    const mouseRef = useRef(new Vector2());         // Mouse position
+    const starMeshesRef = useRef([]);          // Array to keep track of star meshes for raycasting
 
     // Update the camera's near clipping plane and the size factor for the stars
     // cameraRef.current = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -29,35 +29,35 @@ function ExplorePageInfo2() {
     // shaderMaterial.uniforms.sizeFactor.value = 20.0;
 
     // Custom shader material
-    const shaderMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png') },
-            // Additional uniform to control the size of the stars from JavaScript
-            sizeFactor: { value: 50.0 }
-        },
-        vertexShader: `
-            attribute float size;
-            varying vec3 vColor;
-            void main() {
-                vColor = color;
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_PointSize = size * (300.0 / -mvPosition.z);
-                gl_Position = projectionMatrix * mvPosition;
-            }
-        `,
-        fragmentShader: `
-            uniform sampler2D pointTexture;
-            varying vec3 vColor;
-            void main() {
-                gl_FragColor = vec4(vColor, 1.0);
-                gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
-            }
-        `,
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        transparent: true,
-        vertexColors: true
-    });
+    // const shaderMaterial = new THREE.ShaderMaterial({
+    //     uniforms: {
+    //         pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png') },
+    //         // Additional uniform to control the size of the stars from JavaScript
+    //         sizeFactor: { value: 50.0 }
+    //     },
+    //     vertexShader: `
+    //         attribute float size;
+    //         varying vec3 vColor;
+    //         void main() {
+    //             vColor = color;
+    //             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    //             gl_PointSize = size * (300.0 / -mvPosition.z);
+    //             gl_Position = projectionMatrix * mvPosition;
+    //         }
+    //     `,
+    //     fragmentShader: `
+    //         uniform sampler2D pointTexture;
+    //         varying vec3 vColor;
+    //         void main() {
+    //             gl_FragColor = vec4(vColor, 1.0);
+    //             gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
+    //         }
+    //     `,
+    //     blending: THREE.AdditiveBlending,
+    //     depthTest: false,
+    //     transparent: true,
+    //     vertexColors: true
+    // });
 
     const handleExplore = async () => {
         try {
@@ -80,33 +80,34 @@ function ExplorePageInfo2() {
         }
     };
 
+    // const createStarsOld = () => {
+    //     const positions = [];
+    //     const colors = [];
+    //     const sizes = [];
+    //
+    //     stars.forEach(star => {
+    //         const [[longitude, latitude], size, id] = star;  //, [ra, dec], mag] = star;
+    //         const phi = (90 - latitude) * (Math.PI / 180);
+    //         const theta = (longitude + 180) * (Math.PI / 180);
+    //         const x = -((500 * Math.sin(phi) * Math.cos(theta)));
+    //         const y = ((500 * Math.cos(phi)));
+    //         const z = ((500 * Math.sin(phi) * Math.sin(theta)));
+    //         positions.push(x, y, z);
+    //         sizes.push(size/1.6);
+    //         colors.push(1.0, 1.0, 1.0); // White color for simplicity
+    //     });
+    //
+    //     const geometry = new THREE.BufferGeometry();
+    //     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    //     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    //     geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+    //
+    //     const particles = new THREE.Points(geometry, shaderMaterial);
+    //     sceneRef.current.add(particles);
+    // };
+
     const createStars = () => {
-        const positions = [];
-        const colors = [];
-        const sizes = [];
-
-        stars.forEach(star => {
-            const [[longitude, latitude], size, id] = star;  //, [ra, dec], mag] = star;
-            const phi = (90 - latitude) * (Math.PI / 180);
-            const theta = (longitude + 180) * (Math.PI / 180);
-            const x = -((500 * Math.sin(phi) * Math.cos(theta)));
-            const y = ((500 * Math.cos(phi)));
-            const z = ((500 * Math.sin(phi) * Math.sin(theta)));
-            positions.push(x, y, z);
-            sizes.push(size/1.6);
-            colors.push(1.0, 1.0, 1.0); // White color for simplicity
-        });
-
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-
-        const particles = new THREE.Points(geometry, shaderMaterial);
-        sceneRef.current.add(particles);
-    };
-    const createStarsNew = () => {
-        const starGeometry = new THREE.SphereGeometry(1, 32, 32); // Geometry for individual stars
+        const starGeometry = new THREE.SphereGeometry(1, 32, 32);  // Geometry for individual stars
         starMeshesRef.current = stars.map(star => {
             const [[longitude, latitude], size, id] = star;  //, [ra, dec], mag] = star;
             const phi = (90 - latitude) * (Math.PI / 180);
@@ -115,13 +116,13 @@ function ExplorePageInfo2() {
             const y = ((SPHERE_RADIUS * Math.cos(phi)));
             const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
 
-            const material = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White material for stars
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White material for stars   це тип матеріалу в Three.js, який задає базовий колір або текстуру для об'єктів.
             const starMesh = new THREE.Mesh(starGeometry, material);
             starMesh.position.set(x, y, z);
             starMesh.scale.set(size/12, size/12, size/12);
             starMesh.userData = { id }; // , ra, dec, mag }; // Store star data for retrieval on click
 
-            // sceneRef.current.add(starMesh);
+            sceneRef.current.add(starMesh);
             return starMesh;
         });
     };

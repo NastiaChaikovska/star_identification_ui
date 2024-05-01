@@ -31,6 +31,7 @@
 }
 
 .star-info {
+    width: 12%;
     position: fixed;
     top: 11%;
     right: 10px;
