@@ -7,7 +7,7 @@ import '../styles/ExplorePage.css';
 import {Text} from "troika-three-text";
 import { Raycaster, Vector2 } from 'three';
 
-function ExplorePageInfo() {
+function ExplorePage() {
     const SPHERE_RADIUS = 500;
     const [stars, setStars] = useState([]);
     const [latitude, setLatitude] = useState('');
@@ -294,4 +294,4 @@ function ExplorePageInfo() {
     );
 }
 
-export default ExplorePageInfo;
+export default ExplorePage;
