@@ -24,7 +24,7 @@ function ExplorePage() {
     const mouseRef = useRef(new Vector2());         // Mouse position
     const starMeshesRef = useRef([]);          // Array to keep track of star meshes for raycasting
 
-    const [centerStar, setCenterStar] = useState(null);
+    const [centerStarId, setCenterStarId] = useState(null);
 
     const [error, setError] = useState(null);
 
@@ -44,14 +44,10 @@ function ExplorePage() {
             createMeridians();
             createMeridianLabels();
             setError(null);
-            // console.log('!error: ', !error);
         } catch (error) {
             console.error('Помилка при отриманні зірок', error);
         }
     };
-    // useEffect(() => {
-    //     getAllStars();
-    // }, []);
 
     const handleExploreButton = async () => {
         if (latitude && longitude) {
@@ -61,28 +57,33 @@ function ExplorePage() {
                 if (longitude < -180 || longitude > 180) {
                     setError("Довгота повинна бути в діапазоні від -180 до 180 градусів.")
                 } else {
-                    try {
-                        const response = await axios.get('http://localhost:8080/central_star', {
-                            params: {
-                                latitude,
-                                longitude,
-                            },
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Access-Control-Allow-Origin': '*',
-                            },
-                        });
-                        // console.log(response.data);
-                        console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
-                        setCenterStar(response.data);
-                        setError(null);
-                        if (!starsFetched) {
-                            await getAllStars();
-                            setStarsFetched(true);
+                    if (isNaN(latitude) || isNaN(longitude)) {
+                        setError("Довгота та широта повинні бути числовими значеннями.")
+                    }
+                    else {
+                        try {
+                            const response = await axios.get('http://localhost:8080/central_star', {
+                                params: {
+                                    latitude,
+                                    longitude,
+                                },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Access-Control-Allow-Origin': '*',
+                                },
+                            });
+                            // console.log(response.data);
+                            console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
+                            setCenterStarId(response.data);
+                            setError(null);
+                            if (!starsFetched) {
+                                await getAllStars();
+                                setStarsFetched(true);
+                            }
+                            console.log('centerStar: ', centerStarId);
+                        } catch (error) {
+                            console.error('Помилка при отриманні центральної зірки', error);
                         }
-                        console.log('centerStar: ', centerStar);
-                    } catch (error) {
-                        console.error('Помилка при отриманні центральної зірки', error);
                     }
                 }
             }
@@ -90,10 +91,43 @@ function ExplorePage() {
             setError("Введіть довготу та широту")
         }
     };
-    // useEffect(() => {
-    //     handleExploreButton();
-    // }, centerStar);
-
+    // const handleExploreButton = async () => {
+    //     if (latitude && longitude) {
+    //         if (latitude < -90 || latitude > 90) {
+    //             setError("Широта повинна бути в діапазоні від -90 до 90 градусів.")
+    //         } else {
+    //             if (longitude < -180 || longitude > 180) {
+    //                 setError("Довгота повинна бути в діапазоні від -180 до 180 градусів.")
+    //             } else {
+    //                 try {
+    //                     const response = await axios.get('http://localhost:8080/central_star', {
+    //                         params: {
+    //                             latitude,
+    //                             longitude,
+    //                         },
+    //                         headers: {
+    //                             'Content-Type': 'application/json',
+    //                             'Access-Control-Allow-Origin': '*',
+    //                         },
+    //                     });
+    //                     // console.log(response.data);
+    //                     console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
+    //                     setCenterStarId(response.data);
+    //                     setError(null);
+    //                     if (!starsFetched) {
+    //                         await getAllStars();
+    //                         setStarsFetched(true);
+    //                     }
+    //                     console.log('centerStar: ', centerStarId);
+    //                 } catch (error) {
+    //                     console.error('Помилка при отриманні центральної зірки', error);
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         setError("Введіть довготу та широту")
+    //     }
+    // };
 
     // Custom shader material
     const shaderMaterial = new THREE.ShaderMaterial({
@@ -126,6 +160,33 @@ function ExplorePage() {
         vertexColors: true
     });
 
+    const createStarsBefSize = () => {
+        for (let i = sceneGhostRef.current.children.length - 1; i >= 0; i--) {
+            if (sceneGhostRef.current.children[i].type === "Mesh")
+                sceneGhostRef.current.remove(sceneGhostRef.current.children[i]);
+        }
+        const starGeometry = new THREE.SphereGeometry(1, 30, 30);  // Geometry for individual stars
+        starMeshesRef.current = stars.map((star, index) => {  // Use map to iterate over stars with index
+            const [[longitude, latitude], size, id] = star;
+            const phi = (90 - latitude) * (Math.PI / 180);
+            const theta = (longitude + 180) * (Math.PI / 180);
+            const x = -((SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta)));
+            const y = ((SPHERE_RADIUS * Math.cos(phi)));
+            const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
+
+            const material = new THREE.MeshBasicMaterial({
+                color: id === centerStarId ? 0x00BFFF : 0xffffff // Use #00BFFF for the center star
+            });
+            const starMesh = new THREE.Mesh(starGeometry, material);
+            starMesh.position.set(x, y, z);
+            starMesh.scale.set(size / 5, size / 5, size / 5);
+            starMesh.userData = { id };
+
+            sceneGhostRef.current.add(starMesh);
+            return starMesh;
+        });
+        sceneGhostRef.current.updateMatrixWorld(true);
+    };
     const createStars = () => {
         for (let i = sceneGhostRef.current.children.length - 1; i >= 0; i--) {
             if (sceneGhostRef.current.children[i].type === "Mesh")
@@ -140,26 +201,28 @@ function ExplorePage() {
             const y = ((SPHERE_RADIUS * Math.cos(phi)));
             const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
 
-            let material;
-
+            const material = new THREE.MeshBasicMaterial({
+                color: id === centerStarId ? 0x00BFFF : 0xffffff // Use #00BFFF for the center star
+            });
             const starMesh = new THREE.Mesh(starGeometry, material);
             starMesh.position.set(x, y, z);
-            starMesh.scale.set(size / 5, size / 5, size / 5);
-            starMesh.userData = { id };  // , ra, dec, mag }; // Store star data for retrieval on click
+            // Increase scale for the central star
+            const scaleMultiplier = id === centerStarId ? 2 : 1; // Double the size if it's the central star
+            starMesh.scale.set((size / 5) * scaleMultiplier, (size / 5) * scaleMultiplier, (size / 5) * scaleMultiplier);
+            starMesh.userData = { id };
 
             sceneGhostRef.current.add(starMesh);
             return starMesh;
         });
         sceneGhostRef.current.updateMatrixWorld(true);
     };
-
-    const createStarsBefYellow = () => {
+    const createStars3 = () => {
         for (let i = sceneGhostRef.current.children.length - 1; i >= 0; i--) {
             if (sceneGhostRef.current.children[i].type === "Mesh")
                 sceneGhostRef.current.remove(sceneGhostRef.current.children[i]);
         }
         const starGeometry = new THREE.SphereGeometry(1, 30, 30);  // Geometry for individual stars
-        starMeshesRef.current = stars.map(star => {
+        starMeshesRef.current = stars.map((star, index) => {  // Use map to iterate over stars with index
             const [[longitude, latitude], size, id] = star;
             const phi = (90 - latitude) * (Math.PI / 180);
             const theta = (longitude + 180) * (Math.PI / 180);
@@ -167,11 +230,16 @@ function ExplorePage() {
             const y = ((SPHERE_RADIUS * Math.cos(phi)));
             const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
 
-            const material = new THREE.MeshBasicMaterial({color: 0xffffff}); // White material for stars   це тип матеріалу в Three.js, який задає базовий колір або текстуру для об'єктів.
+            // Adjust color and scale based on whether this is the central star
+            const isCenterStar = id === centerStarId;
+            const material = new THREE.MeshBasicMaterial({
+                color: isCenterStar ? 0x00BFFF : 0xffffff // Central star in blue, others in white
+            });
             const starMesh = new THREE.Mesh(starGeometry, material);
             starMesh.position.set(x, y, z);
-            starMesh.scale.set(size / 5, size / 5, size / 5);
-            starMesh.userData = {id};  // , ra, dec, mag }; // Store star data for retrieval on click
+            const scaleMultiplier = isCenterStar ? 2 : 1; // Double the size if it's the central star
+            starMesh.scale.set((size / 5) * scaleMultiplier, (size / 5) * scaleMultiplier, (size / 5) * scaleMultiplier);
+            starMesh.userData = { id };
 
             sceneGhostRef.current.add(starMesh);
             return starMesh;
@@ -179,6 +247,46 @@ function ExplorePage() {
         sceneGhostRef.current.updateMatrixWorld(true);
     };
 
+
+    const createStarsOld3 = () => {
+        for (let i = sceneRef.current.children.length - 1; i >= 0; i--) {
+            if (sceneRef.current.children[i].type === "Points")
+                sceneRef.current.remove(sceneRef.current.children[i]);
+        }
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+        const color = new THREE.Color();
+        const sizes = [];
+
+        stars.forEach((star, index) => {
+            const [[longitude, latitude], size, id] = star;
+            const phi = (90 - latitude) * (Math.PI / 180);
+            const theta = (longitude + 180) * (Math.PI / 180);
+            const x = -((500 * Math.sin(phi) * Math.cos(theta)));
+            const y = ((500 * Math.cos(phi)));
+            const z = ((500 * Math.sin(phi) * Math.sin(theta)));
+
+            positions.push(x, y, z);
+
+            if (id === centerStarId) {
+                color.set(0x00BFFF);
+                sizes.push((size / 1.6) * 2); // Double the size and blue color for central star
+            } else {
+                color.set(0xffffff); // White color for other stars
+                sizes.push(size / 1.6);
+            }
+
+            colors.push(color.r, color.g, color.b);
+        });
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+        const points = new THREE.Points(geometry, shaderMaterial);
+        sceneRef.current.add(points);
+    };
     const createStarsOld = () => {
         for (let i = sceneRef.current.children.length - 1; i >= 0; i--) {
             if (sceneRef.current.children[i].type === "Points")
@@ -190,8 +298,8 @@ function ExplorePage() {
         const color = new THREE.Color();
         const sizes = [];
 
-        stars.forEach((star, index) => { // Iterate over stars with index
-            const [[longitude, latitude], size] = star;
+        stars.forEach((star, index) => {
+            const [[longitude, latitude], size, id] = star;
             const phi = (90 - latitude) * (Math.PI / 180);
             const theta = (longitude + 180) * (Math.PI / 180);
             const x = -((500 * Math.sin(phi) * Math.cos(theta)));
@@ -199,26 +307,19 @@ function ExplorePage() {
             const z = ((500 * Math.sin(phi) * Math.sin(theta)));
 
             positions.push(x, y, z);
-            // console.log('type', typeof(centerStar));
-            // if (index === selectedStarId) {
-            //     color.set("#00BFFF");
-            // }
-            // else
+
+            if (id === centerStarId) {
+                color.set(0x00FF00);
+                sizes.push((size / 1.6) * 2); // Double the size for central star
+            } else {
+                // color.set(0xffffff);
+                color.set('rgb(231,231,231)');  // '#FFFFFFDD'); //  '#2c2c2c'); // 0xffffff);  //
+                sizes.push(size / 1.6);
+            }
             if (index === 0) {
                 color.set(0xffff00);
             }
-            // else
-            // if (index === centerStar) {
-            //     color.set("#FF0000");
-            //     console.log('centerStar id color:', centerStar);
-            //     console.log('found');
-            // }
-            else {
-                color.set(0xffffff);   // "#2C2C2C");  // 0xffffff
-            }
-
-            colors.push(color.r, color.g, color.b);
-            sizes.push(size / 1.6);
+                colors.push(color.r, color.g, color.b);
         });
 
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -228,8 +329,7 @@ function ExplorePage() {
         const points = new THREE.Points(geometry, shaderMaterial);
         sceneRef.current.add(points);
     };
-
-    const createStarsOldBefYellow = () => {
+    const createStarsOldBefSize = () => {
         for (let i = sceneRef.current.children.length - 1; i >= 0; i--) {
             if (sceneRef.current.children[i].type === "Points")
                 sceneRef.current.remove(sceneRef.current.children[i]);
@@ -240,8 +340,8 @@ function ExplorePage() {
         const color = new THREE.Color();
         const sizes = [];
 
-        stars.forEach(star => {
-            const [[longitude, latitude], size] = star;
+        stars.forEach((star, index) => {
+            const [[longitude, latitude], size, id] = star;
             const phi = (90 - latitude) * (Math.PI / 180);
             const theta = (longitude + 180) * (Math.PI / 180);
             const x = -((500 * Math.sin(phi) * Math.cos(theta)));
@@ -249,7 +349,15 @@ function ExplorePage() {
             const z = ((500 * Math.sin(phi) * Math.sin(theta)));
 
             positions.push(x, y, z);
-            color.setHSL(1.0, 1.0, 1.0);
+
+            if (index === 0) {
+                color.set(0xffff00);
+            } else if (id === centerStarId) {
+                color.set(0x00BFFF);
+            } else {
+                color.set('rgb(217,217,217)');  // '#FFFFFFDD'); //  '#2c2c2c'); // 0xffffff);  //
+            }
+
             colors.push(color.r, color.g, color.b);
             sizes.push(size / 1.6);
         });
@@ -261,6 +369,7 @@ function ExplorePage() {
         const points = new THREE.Points(geometry, shaderMaterial);
         sceneRef.current.add(points);
     };
+
 
     const onCanvasDoubleClick = async (event) => {
         event.preventDefault();
@@ -440,24 +549,16 @@ function ExplorePage() {
         };
     }, []);
 
-    // This useEffect hook gets called when the 'stars' state updates
-    // useEffect(() => {
-    //     if (stars.length > 0) {
-    //         createStars();
-    //         createStarsOld();
-    //     }
-    // }, [stars, selectedStarId], centerStar); // The dependency array tells React to rerun this effect when 'stars' changes
-
     useEffect(() => {
         if (stars.length > 0) {
             createStars();
         }
-    }, [stars]); // The dependency array tells React to rerun this effect when 'stars' changes
+    }, [stars]);
     useEffect(() => {
         if (stars.length > 0) {
             createStarsOld();
         }
-    }, [stars, selectedStarId], centerStar); // The dependency array tells React to rerun this effect when 'stars' changes
+    }, [stars, selectedStarId], centerStarId);
 
 
     const closeStarInfo = () => setSelectedStar(null);

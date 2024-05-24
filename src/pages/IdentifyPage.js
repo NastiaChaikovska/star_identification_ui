@@ -71,7 +71,7 @@ function IdentifyPage() {
     };
 
     const handleUpload = async () => {
-        setResponseText('Calculating . . .')
+        setResponseText('Обчислення . . .')
         const formData = new FormData();
         formData.append('file', selectedFile);
 
@@ -79,10 +79,17 @@ function IdentifyPage() {
             const response = await fetch('http://127.0.0.1:5000/upload', {
                 method: 'POST',
                 body: formData,
+                mode: 'cors',
             });
 
             const data = await response.json();
-            setResponseText(data.message);
+            if (data.message.startsWith("Ваші координати:")){
+                setResponseText(data.message);
+            }
+            else {
+                setResponseText("Неможливо знайти зірки на фото");
+            }
+            // setResponseText(data.message);
         } catch (error) {
             console.error('Error uploading file:', error);
         }
@@ -91,9 +98,9 @@ function IdentifyPage() {
     return (
         <div className="identify-page">
             <Background/>
-            <Layout showMenu={true} title="Identify your location"/>
+            <Layout showMenu={true} title="Визначте своє місцезнаходження"/>
             <div className="identify-text">
-                Add an image of the night sky above you to identify your location
+                Додайте зображення зоряного неба, щоб визнати місцезнаходження
             </div>
             <div className="picture-input">
                 <label htmlFor="fileInput" className="custom-file-upload">
@@ -102,7 +109,7 @@ function IdentifyPage() {
                     ) : (
                         <div className="identify-page">
                             <img src={PhotoImage} className="picture-input-button"/>
-                            <div className="picture-input-button-text">Add picture right here</div>
+                            <div className="picture-input-button-text">Додайте зображення</div>
                         </div>
                     )}
                 </label>
@@ -114,7 +121,7 @@ function IdentifyPage() {
                 />
             </div>
             <div className="identify-button">
-                <button className="custom-button" onClick={handleUpload}>Upload</button>
+                <button className="custom-button" onClick={handleUpload}>Визначити</button>
             </div>
             <div className="identify-result">
                 {responseText && <div> {responseText}</div>}

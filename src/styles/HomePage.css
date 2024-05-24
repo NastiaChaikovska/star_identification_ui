@@ -13,24 +13,28 @@
     /*position: fixed;*/
     /*top: 0;*/
     /*left: 0;*/
-    width: 40%;
+    width: 60%;
     color: #D9D9D9;
-    font-size: 28px;
+    font-size: 30px;
+    text-align: center;
 }
 
 .home-page__main__buttons{
-    width: 38%;
+    width: 50%;
     height: 55%;
+    /*background-color: rgba(255, 255, 255, 0.87);*/
+    /*background-color: #ecebeb;*/
     background-color: #333333;
     border-radius: 45px;
     /*padding: 5%;*/
-    margin-left: 16%;
+    margin-left: 9%;
+    margin-top: 3%;
 }
 
 .home-page__main__buttons button{
     display: flex;
     height: 35%;
-    width: 89%;
+    width: 90%;
     background-color: #424242;
     border: none;
     border-radius: 25px;
@@ -44,18 +48,18 @@
     /*height: 35%;*/
     /*background-color: #424242;*/
     /*border-radius: 25px;*/
-    margin: 8% 5%;
+    margin: 7% 5%;
 }
 .home-page__main__buttons_button img{
     margin-top: 5%;
 }
 
-.home-page__main__buttons_button button{
-    border: none;
-    background-color: coral;
-    color: #D9D9D9;
-    font-size: 20px;
-}
+/*.home-page__main__buttons_button button{*/
+/*    border: none;*/
+/*    background-color: coral;*/
+/*    color: #D9D9D9;*/
+/*    font-size: 20px;*/
+/*}*/
 
 .home-page__main__buttons_button_text{
     /*background-color: aqua;*/
@@ -64,11 +68,10 @@
     font-size: 18px;
     text-align: left;
     color: #D9D9D9;
-
 }
 
 .home-page__main__buttons_arrow{
-    margin: 12% 0;
+    margin: 12% 1%;
     justify-content: flex-end;
 
     /*background-color: burlywood;*/

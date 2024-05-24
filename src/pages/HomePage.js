@@ -24,20 +24,20 @@ function HomePage() {
     return (
         <div>
             <Background/>
-            <Layout showMenu={false} title="Home"/>
+            <Layout showMenu={false} title="АстроНавігатор"/>
             {/*<div className="title">*/}
             {/*    Home*/}
             {/*</div>*/}
 
             <div className="home-page__main">
                 <div className="home-page__main__text">
-                    Welcome to the " " site, where every moment becomes an enchanting journey into the unknown. Upload your starry sky photos and find out the coordinates of your location. Or enter your geographic coordinates and the incredible beauty of the night sky will unfold before you.
+                    Ласкаво просимо на сайт «АстроНавігатор», де кожен момент стане чарівною подорожжю в невідоме. Завантажте фотографії зоряного неба та визначте координати вашого місцезнаходження. Або введіть ваші географічні координати, і неймовірна краса нічного неба розкриється перед вами.
                 </div>
                 <div className="home-page__main__buttons">
                     <button onClick={goToIdentifyPage}>
                         <div className="home-page__main__buttons_button">
                             <img src={IdentifyButtonImage}/>
-                            <div className="home-page__main__buttons_button_text">Identify your location</div>
+                            <div className="home-page__main__buttons_button_text">Визначити місцезнаходження</div>
                         </div>
                         <div className="home-page__main__buttons_arrow">
                             <img src={ArrowImage}/>
@@ -46,7 +46,7 @@ function HomePage() {
                     <button onClick={goToExplorePage}>
                         <div className="home-page__main__buttons_button">
                             <img src={ExploreButtonImage}/>
-                            <div className="home-page__main__buttons_button_text">Explore the Universe Above</div>
+                            <div className="home-page__main__buttons_button_text">Дослідити всесвіт</div>
                         </div>
                         <div className="home-page__main__buttons_arrow">
                             <img src={ArrowImage}/>
