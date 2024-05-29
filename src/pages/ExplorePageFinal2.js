@@ -23,6 +23,7 @@ function ExplorePage() {
     const raycasterRef = useRef(new Raycaster());  // Raycaster for mouse interaction
     const mouseRef = useRef(new Vector2());         // Mouse position
     const starMeshesRef = useRef([]);          // Array to keep track of star meshes for raycasting
+    const[starMeshPosition, setStarMeshPosition] = useState(null);
 
     const [centerStarId, setCenterStarId] = useState(null);
 
@@ -57,7 +58,7 @@ function ExplorePage() {
                 if (longitude < -180 || longitude > 180) {
                     setError("Довгота повинна бути в діапазоні від -180 до 180 градусів.")
                 } else {
-                    if (latitude.isDigit() || longitude.isDigit()){
+                    if (isNaN(latitude) || isNaN(longitude)) {
                         setError("Довгота та широта повинні бути числовими значеннями.")
                     }
                     else {
@@ -73,14 +74,14 @@ function ExplorePage() {
                                 },
                             });
                             // console.log(response.data);
-                            console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
+                            // console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
                             setCenterStarId(response.data);
                             setError(null);
                             if (!starsFetched) {
                                 await getAllStars();
                                 setStarsFetched(true);
                             }
-                            console.log('centerStar: ', centerStarId);
+                            // console.log('centerStar: ', centerStarId);
                         } catch (error) {
                             console.error('Помилка при отриманні центральної зірки', error);
                         }
@@ -91,43 +92,6 @@ function ExplorePage() {
             setError("Введіть довготу та широту")
         }
     };
-    // const handleExploreButton = async () => {
-    //     if (latitude && longitude) {
-    //         if (latitude < -90 || latitude > 90) {
-    //             setError("Широта повинна бути в діапазоні від -90 до 90 градусів.")
-    //         } else {
-    //             if (longitude < -180 || longitude > 180) {
-    //                 setError("Довгота повинна бути в діапазоні від -180 до 180 градусів.")
-    //             } else {
-    //                 try {
-    //                     const response = await axios.get('http://localhost:8080/central_star', {
-    //                         params: {
-    //                             latitude,
-    //                             longitude,
-    //                         },
-    //                         headers: {
-    //                             'Content-Type': 'application/json',
-    //                             'Access-Control-Allow-Origin': '*',
-    //                         },
-    //                     });
-    //                     // console.log(response.data);
-    //                     console.log('centerStar JSON.stringify ', JSON.stringify(response.data));
-    //                     setCenterStarId(response.data);
-    //                     setError(null);
-    //                     if (!starsFetched) {
-    //                         await getAllStars();
-    //                         setStarsFetched(true);
-    //                     }
-    //                     console.log('centerStar: ', centerStarId);
-    //                 } catch (error) {
-    //                     console.error('Помилка при отриманні центральної зірки', error);
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         setError("Введіть довготу та широту")
-    //     }
-    // };
 
     // Custom shader material
     const shaderMaterial = new THREE.ShaderMaterial({
@@ -160,35 +124,7 @@ function ExplorePage() {
         vertexColors: true
     });
 
-    const createStarsBefSize = () => {
-        for (let i = sceneGhostRef.current.children.length - 1; i >= 0; i--) {
-            if (sceneGhostRef.current.children[i].type === "Mesh")
-                sceneGhostRef.current.remove(sceneGhostRef.current.children[i]);
-        }
-        const starGeometry = new THREE.SphereGeometry(1, 30, 30);  // Geometry for individual stars
-        starMeshesRef.current = stars.map((star, index) => {  // Use map to iterate over stars with index
-            const [[longitude, latitude], size, id] = star;
-            const phi = (90 - latitude) * (Math.PI / 180);
-            const theta = (longitude + 180) * (Math.PI / 180);
-            const x = -((SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta)));
-            const y = ((SPHERE_RADIUS * Math.cos(phi)));
-            const z = ((SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta)));
-
-            const material = new THREE.MeshBasicMaterial({
-                color: id === centerStarId ? 0x00BFFF : 0xffffff // Use #00BFFF for the center star
-            });
-            const starMesh = new THREE.Mesh(starGeometry, material);
-            starMesh.position.set(x, y, z);
-            starMesh.scale.set(size / 5, size / 5, size / 5);
-            starMesh.userData = { id };
-
-            sceneGhostRef.current.add(starMesh);
-            return starMesh;
-        });
-        sceneGhostRef.current.updateMatrixWorld(true);
-    };
     const createStars = () => {
-        // First, remove any existing children from the scene that are of type "Mesh"
         for (let i = sceneGhostRef.current.children.length - 1; i >= 0; i--) {
             if (sceneGhostRef.current.children[i].type === "Mesh")
                 sceneGhostRef.current.remove(sceneGhostRef.current.children[i]);
@@ -211,16 +147,16 @@ function ExplorePage() {
             starMesh.scale.set(size / 5, size / 5, size / 5);
             starMesh.userData = { id };
 
-            // If this is the central star, update the camera to look at it
             if (id === centerStarId) {
                 cameraRef.current.lookAt(starMesh.position);
+                // setStarMeshPosition(starMesh.position);
             }
 
             sceneGhostRef.current.add(starMesh);
             return starMesh;
         });
+        sceneGhostRef.current.updateMatrixWorld(true);
     };
-
 
     const createStarsOld = () => {
         for (let i = sceneRef.current.children.length - 1; i >= 0; i--) {
@@ -412,6 +348,9 @@ function ExplorePage() {
 
         // Update OrbitControls configuration to allow for closer zoom
         const controls = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
+        // controls.target = new THREE.Vector3(starMeshPosition);
+        // cameraRef.current.lookAt(starMeshPosition);
+        // controls.update();
         controls.minDistance = 0.01;   // Can be even smaller like 0.1 for a closer zoom
         controls.maxDistance = 5000;   // Farther max to see the whole scene
         controls.enableZoom = true;

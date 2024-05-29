@@ -192,6 +192,7 @@ function ExplorePage() {
             if (sceneGhostRef.current.children[i].type === "Mesh")
                 sceneGhostRef.current.remove(sceneGhostRef.current.children[i]);
         }
+
         const starGeometry = new THREE.SphereGeometry(1, 30, 30);  // Geometry for individual stars
         starMeshesRef.current = stars.map((star, index) => {  // Use map to iterate over stars with index
             const [[longitude, latitude], size, id] = star;
